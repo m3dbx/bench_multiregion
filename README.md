@@ -193,7 +193,12 @@ kubectl create -f ./examples/kube-prometheus-manifests
 
 Create a service monitor to start scraping the M3DB nodes:
 ```bash
-kubectl apply -f ./examples/prometheus-servicemonitor.yaml
+kubectl apply -f ./examples/prometheus-servicemonitor-dbnode.yaml
+```
+
+Create another service monitor to start scraping the coordinators:
+```bash
+kubectl apply -f ./examples/prometheus-servicemonitor-coordinator.yaml
 ```
 
 Port forward to access Prometheus and Grafana:
