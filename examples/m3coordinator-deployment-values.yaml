@@ -1,5 +1,5 @@
 cluster_namespace: default
-cluster_name: bench-cluster-m3coordinator
+cluster_name: bench-cluster
 num_coordinators: 30
 namespaces:
 - name: bench-10s:14d
