@@ -1,0 +1,11 @@
+cluster_namespace: default
+cluster_name: bench-cluster-m3coordinator
+num_coordinators: 30
+namespaces:
+- name: bench-10s:14d
+  type: unaggregated
+  retention: 336h
+etcd_endpoints:
+- http://etcd-0.etcd:2379
+- http://etcd-1.etcd:2379
+- http://etcd-2.etcd:2379

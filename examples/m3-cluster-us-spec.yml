@@ -1,0 +1,62 @@
+apiVersion: operator.m3db.io/v1alpha1
+kind: M3DBCluster
+metadata:
+  name: bench-cluster
+spec:
+  image: quay.io/m3db/m3dbnode:latest
+  replicationFactor: 3
+  numberOfShards: 1024
+  etcdEndpoints:
+  - http://etcd-0.etcd:2379
+  - http://etcd-1.etcd:2379
+  - http://etcd-2.etcd:2379
+  isolationGroups:
+  - name: group1
+    numInstances: 10
+    nodeAffinityTerms:
+    - key: failure-domain.beta.kubernetes.io/zone
+      values:
+      - us-east1-b
+  - name: group2
+    numInstances: 10
+    nodeAffinityTerms:
+    - key: failure-domain.beta.kubernetes.io/zone
+      values:
+      - us-east1-c
+  - name: group3
+    numInstances: 10
+    nodeAffinityTerms:
+    - key: failure-domain.beta.kubernetes.io/zone
+      values:
+      - us-east1-d
+  podIdentityConfig:
+    sources: []
+  namespaces:
+  - name: bench-10s:14d
+    options:
+      bootstrapEnabled: true
+      flushEnabled: true
+      writesToCommitLog: true
+      cleanupEnabled: true
+      snapshotEnabled: true
+      repairEnabled: false
+      retentionOptions:
+        retentionPeriod: 336h
+        blockSize: 2h
+        bufferFuture: 10m
+        bufferPast: 10m
+        blockDataExpiry: true
+        blockDataExpiryAfterNotAccessPeriod: 10m
+      indexOptions:
+        enabled: true
+        blockSize: 2h
+  dataDirVolumeClaimTemplate:
+    metadata:
+      name: m3db-data
+    spec:
+      storageClassName: topology-aware-standard
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 100Gi

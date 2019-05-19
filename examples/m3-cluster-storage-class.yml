@@ -1,0 +1,9 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: topology-aware-standard
+provisioner: kubernetes.io/gce-pd
+# WaitForFirstConsumer required with k8s 1.12 
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  type: pd-standard
