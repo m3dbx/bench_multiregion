@@ -10,7 +10,6 @@ Provision a regional Kubernetes cluster in each region you will run the benchmar
 
 To achieve best performance, set the following attributes for nodes (lower resources work fine, they will not perform as many writes per second however):
 - Machine type `n1-highmem-32` (32 vCPUs, 208 GB memory)
-- SSD disk
 
 Set your GCP project context:
 ```bash
@@ -27,7 +26,7 @@ gcloud container clusters get-credentials --region $REGION $CLUSTER_NAME
 Set the context for the region:
 ```bash
 # List contexts
-    kubectl config get-contexts
+kubectl config get-contexts
 # Set context
 kubectl config use-context $CONTEXT_NAME
 ```
@@ -47,7 +46,7 @@ Create an etcd cluster:
 kubectl apply -f https://raw.githubusercontent.com/m3db/m3db-operator/master/example/etcd/etcd-basic.yaml
 ```
 
-Let's create a storage class to use named something like `m3-cluster-storage-class.yml`:
+Let's create a storage class, for this example we use SSDs, named something like `m3-cluster-storage-class.yml`:
 ```yaml
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
