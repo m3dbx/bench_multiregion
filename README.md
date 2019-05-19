@@ -229,7 +229,13 @@ spec:
         image: quay.io/m3db/promremotebench
         env:
         - name: PROMREMOTEBENCH_TARGET
-          value: http://m3coordinator-bench-cluster:7201/api/v1/prom/remote/write
+          value: "http://m3coordinator-dedicated-bench-cluster:7201/api/v1/prom/remote/write"
+        - name: PROMREMOTEBENCH_NUM_HOSTS
+          value: "1000"
+        - name: PROMREMOTEBENCH_INTERVAL
+          value: "10"
+        - name: PROMREMOTEBENCH_BATCH
+          value: "128"
 ```
 
 Now apply the manifest:
@@ -237,3 +243,4 @@ Now apply the manifest:
 kubectl apply -f $PROMREMOTEBENCH_DEPLOYMENT_YAML_FILE
 ```
 
+Now the rough rule of thumb is that every replica of the benchmarkers is ballpark around 1,000 writes per second load each. To get to desired writes per second, step up the writes in increments of 50,000 or so (i.e. adding 50 replicas each step). You should monitor your cluster to see how it's doing it at each increment.

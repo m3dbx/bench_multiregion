@@ -14,7 +14,13 @@ spec:
     spec:
       containers:
       - name: promremotebench
-        image: quay.io/m3db/promremotebench:v0.2.0
+        image: quay.io/m3db/promremotebench:v0.4.0
         env:
         - name: PROMREMOTEBENCH_TARGET
-          value: http://m3coordinator-dedicated-bench-cluster:7201/api/v1/prom/remote/write
+          value: "http://m3coordinator-dedicated-bench-cluster:7201/api/v1/prom/remote/write"
+        - name: PROMREMOTEBENCH_NUM_HOSTS
+          value: "1000"
+        - name: PROMREMOTEBENCH_INTERVAL
+          value: "10"
+        - name: PROMREMOTEBENCH_BATCH
+          value: "128"

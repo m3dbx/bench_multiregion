@@ -1,0 +1,1 @@
+This is a collection of slightly modified dashboards for use in benchmark, they may become stale and the changes should be applied back to the original dashboards and uploaded to Grafana.
