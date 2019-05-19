@@ -52,12 +52,12 @@ Let's create a storage class to use named something like `m3-cluster-storage-cla
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-  name: topology-aware-standard
+  name: topology-aware-ssd
 provisioner: kubernetes.io/gce-pd
 # WaitForFirstConsumer required with k8s 1.12 
 volumeBindingMode: WaitForFirstConsumer
 parameters:
-  type: pd-standard
+  type: pd-ssd
 ```
 
 Now apply:
@@ -129,12 +129,12 @@ spec:
       name: m3db-data
     spec:
       # Note: using the storage class we created
-      storageClassName: topology-aware-standard
+      storageClassName: topology-aware-ssd
       accessModes:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 100Gi
+          storage: 500Gi
 ```
 
 Apply the manifest:

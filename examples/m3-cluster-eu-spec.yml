@@ -54,9 +54,9 @@ spec:
     metadata:
       name: m3db-data
     spec:
-      storageClassName: topology-aware-standard
+      storageClassName: topology-aware-ssd
       accessModes:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 100Gi
+          storage: 500Gi
