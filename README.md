@@ -170,11 +170,11 @@ Now apply the config using helm to template and execute the resulting manifests:
 # Set repo path to where your repo is locally
 export REPO_OPERATOR_PATH=$GOPATH/src/github.com/m3db/m3db-operator
 # Set the values file to the file you just created
-export VALUES_YAML_FILE=m3coordinator-deployment-values.yaml
-# First check the template looks sane
-helm template -f $VALUES_YAML_FILE ${REPO_OPERATOR_PATH}/helm/m3coordinator | less
-# Now apply the config
-helm template -f $VALUES_YAML_FILE ${REPO_OPERATOR_PATH}/helm/m3coordinator | kubectl apply -f -
+export VALUES_YAML_FILE=./examples/m3coordinator-deployment-values.yaml
+# Run the template
+helm template -f $VALUES_YAML_FILE ${REPO_OPERATOR_PATH}/helm/m3coordinator > ./examples/generated/m3coordinator-specs.yml
+# Adjust if required and then apply the manifest
+kubectl apply -f ./examples/generated/m3coordinator-specs.yml
 ```
 
 ## 4. Monitor the clusters with Prometheus in each region

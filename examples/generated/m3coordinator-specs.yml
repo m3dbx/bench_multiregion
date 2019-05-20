@@ -1,0 +1,130 @@
+---
+# Source: m3coordinator/templates/m3coordinator-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: m3coordinator
+  name: m3coordinator-dedicated-bench-cluster
+data:
+  coordinator.yaml: |+
+    listenAddress:
+      type: "config"
+      value: "0.0.0.0:7201"
+    metrics:
+      scope:
+        prefix: "coordinator"
+      prometheus:
+        handlerPath: /metrics
+        listenAddress: 0.0.0.0:7203 # until https://github.com/m3db/m3/issues/682 is resolved
+      sanitization: prometheus
+      samplingRate: 1.0
+      extended: none
+    clusters:
+      - namespaces:
+        - namespace: bench-10s:14d
+          type: unaggregated
+          retention: 336h
+        client:
+          config:
+            service:
+              # FILL ME IN
+              env: default/bench-cluster
+              zone: embedded
+              service: m3db
+              cacheDir: /var/lib/m3kv
+              etcdClusters:
+              - zone: embedded
+                endpoints:
+                - http://etcd-0.etcd:2379
+                - http://etcd-1.etcd:2379
+                - http://etcd-2.etcd:2379
+    ingest:
+      ingester:
+        workerPoolSize: 100
+        opPool:
+          size: 100
+        retry:
+          maxRetries: 3
+          jitter: true
+        logSampleRate: 0.01
+      m3msg:
+        server:
+          listenAddress: "0.0.0.0:7507"
+          retry:
+            maxBackoff: 10s
+            jitter: true
+    carbon:
+      ingester:
+        listenAddress: "0.0.0.0:7204"
+    tagOptions:
+      idScheme: quoted
+
+---
+# Source: m3coordinator/templates/m3coordinator-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: m3coordinator
+  name: m3coordinator-dedicated-bench-cluster
+  namespace: default
+spec:
+  ports:
+  - name: coordinator
+    port: 7201
+    protocol: TCP
+    targetPort: 7201
+  - name: coord-debug
+    port: 7203
+    protocol: TCP
+    targetPort: 7203
+  selector:
+    app: m3coordinator
+  type: ClusterIP
+
+---
+# Source: m3coordinator/templates/m3coordinator-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: m3coordinator
+    deployment: dedicated-bench-cluster
+  name: coordinator-dedicated
+spec:
+  replicas: 30
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: m3coordinator
+      deployment: dedicated-bench-cluster
+  template:
+    metadata:
+      labels:
+        app: m3coordinator
+        deployment: dedicated-bench-cluster
+    spec:
+      containers:
+      - name: m3coordinator
+        image: quay.io/m3db/m3coordinator:latest
+        args:
+        - "-f"
+        - "/etc/m3/coordinator.yaml"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/m3
+        imagePullPolicy: Always
+        ports:
+        - name: coordinator
+          containerPort: 7201
+          protocol: TCP
+        - name: debug
+          containerPort: 7203
+          protocol: TCP
+      volumes:
+      - name: config
+        configMap:
+          name: m3coordinator-dedicated-bench-cluster
+
