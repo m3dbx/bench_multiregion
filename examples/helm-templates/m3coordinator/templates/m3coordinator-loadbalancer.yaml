@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: m3coordinator-dedicated-{{ .Values.cluster_name }}-lb
+  namespace: {{ .Values.cluster_namespace }}
+spec:
+  ports:
+  - port: 80
+    targetPort: 9000
+    protocol: TCP
+    name: http2
+  selector:
+    app: m3coordinator
+  type: LoadBalancer

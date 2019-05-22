@@ -39,6 +39,10 @@ data:
                 - http://etcd-0.etcd:2379
                 - http://etcd-1.etcd:2379
                 - http://etcd-2.etcd:2379
+    rpc:
+      enabled: true
+      listenAddress: "0.0.0.0:7202"
+      remoteListenAddresses:
     ingest:
       ingester:
         workerPoolSize: 100
@@ -61,6 +65,23 @@ data:
       idScheme: quoted
 
 ---
+# Source: m3coordinator/templates/m3coordinator-loadbalancer.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: m3coordinator-dedicated-bench-cluster-lb
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    targetPort: 9000
+    protocol: TCP
+    name: http2
+  selector:
+    app: m3coordinator
+  type: LoadBalancer
+
+---
 # Source: m3coordinator/templates/m3coordinator-service.yaml
 apiVersion: v1
 kind: Service
@@ -75,6 +96,10 @@ spec:
     port: 7201
     protocol: TCP
     targetPort: 7201
+  - name: coord-grpc
+    port: 7202
+    protocol: TCP
+    targetPort: 7203
   - name: coord-debug
     port: 7203
     protocol: TCP
@@ -93,7 +118,7 @@ metadata:
     deployment: dedicated-bench-cluster
   name: coordinator-dedicated
 spec:
-  replicas: 30
+  replicas: 36
   strategy:
     type: RollingUpdate
   selector:
@@ -107,6 +132,21 @@ spec:
         deployment: dedicated-bench-cluster
     spec:
       containers:
+      - name: esp
+        image: gcr.io/endpoints-release/endpoints-runtime:1
+        args: [
+          "--http2_port=9000",
+          "--service=m3coordinator-dedicated-bench-cluster",
+          "--rollout_strategy=managed",
+          "--backend=grpc://127.0.0.1:7202",
+          "--service_account_key=/etc/creds/service-account-creds.json"
+        ]
+        ports:
+        - containerPort: 9000
+        volumeMounts:
+        - mountPath: /etc/creds
+          name: service-account-creds
+          readOnly: true
       - name: m3coordinator
         image: quay.io/m3db/m3coordinator:latest
         args:
@@ -120,6 +160,9 @@ spec:
         - name: coordinator
           containerPort: 7201
           protocol: TCP
+        - name: grpc
+          containerPort: 7202
+          protocol: TCP
         - name: debug
           containerPort: 7203
           protocol: TCP
@@ -127,4 +170,7 @@ spec:
       - name: config
         configMap:
           name: m3coordinator-dedicated-bench-cluster
+      - name: service-account-creds
+        secret:
+          secretName: service-account-creds
 

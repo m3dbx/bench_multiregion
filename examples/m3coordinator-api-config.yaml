@@ -1,0 +1,21 @@
+type: google.api.Service
+config_version: 3
+
+name: rpc.endpoints.YOUR-PROJECT-ID-123.cloud.goog
+
+title: M3Coordinator gRPC API
+apis:
+- name: rpc.Query
+
+#
+# API usage restrictions.
+#
+usage:
+  rules:
+  # ListShelves methods can be called without an API Key.
+  - selector: rpc.Query.Fetch
+    allow_unregistered_calls: true
+  - selector: rpc.Query.Search
+    allow_unregistered_calls: true
+  - selector: rpc.Query.CompleteTags
+    allow_unregistered_calls: true

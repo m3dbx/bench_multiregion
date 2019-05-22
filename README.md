@@ -167,12 +167,12 @@ etcd_endpoints:
 
 Now apply the config using helm to template and execute the resulting manifests:
 ```bash
-# Set repo path to where your repo is locally
-export REPO_OPERATOR_PATH=$GOPATH/src/github.com/m3db/m3db-operator
+# Set repo path to where your helm template is locally
+export COORDINATOR_HELM_TEMPLATE_PATH=./examples/helm-templates/m3coordinator
 # Set the values file to the file you just created
-export VALUES_YAML_FILE=./examples/m3coordinator-deployment-values.yaml
+export VALUES_YAML_FILE=./examples/m3coordinator-eu-deployment-values.yaml
 # Run the template
-helm template -f $VALUES_YAML_FILE ${REPO_OPERATOR_PATH}/helm/m3coordinator > ./examples/generated/m3coordinator-specs.yml
+helm template -f $VALUES_YAML_FILE $COORDINATOR_HELM_TEMPLATE_PATH > ./examples/generated/m3coordinator-specs.yml
 # Adjust if required and then apply the manifest
 kubectl apply -f ./examples/generated/m3coordinator-specs.yml
 ```
@@ -210,7 +210,68 @@ kubectl --namespace monitoring port-forward svc/grafana 3000
 Add the following dashboard to Grafana:
 [https://grafana.com/dashboards/8126](https://grafana.com/dashboards/8126). 
 
-## 5. Add load from promremotebench
+## 5. Setup cross region queries
+
+First we must compile the query proto so we can deploy an ingress for each region:
+```bash
+protoc --proto_path=$GOPATH/src/github.com/m3db/m3/src/query/generated/proto/rpcpb -o /tmp/query.pb $GOPATH/src/github.com/m3db/m3/src/quer
+y/generated/proto/rpcpb/query.proto
+```
+
+Now create an API config (see `m3coordinator-api-config.yaml` for example):
+```yaml
+type: google.api.Service
+config_version: 3
+
+name: rpc.endpoints.YOUR-PROJECT-ID-123.cloud.goog
+
+title: M3Coordinator gRPC API
+apis:
+- name: rpc.Query
+
+#
+# API usage restrictions.
+#
+usage:
+  rules:
+  # ListShelves methods can be called without an API Key.
+  - selector: rpc.Query.Fetch
+    allow_unregistered_calls: true
+  - selector: rpc.Query.Search
+    allow_unregistered_calls: true
+  - selector: rpc.Query.CompleteTags
+    allow_unregistered_calls: true
+```
+
+Now deploy this:
+```bash
+gcloud endpoints services deploy /tmp/query.pb  ./examples/m3coordinator-api-config.yaml
+```
+
+Make sure following services are enabled:
+- `endpoints.googleapis.com`
+- `servicecontrol.googleapis.com` 
+- `servicemanagement.googleapis.com`
+
+To check issue:
+```bash
+gcloud services list
+```
+
+To enable a missing one:
+```bash
+gcloud services enable $SERVICE_NAME
+```
+
+<!-- Let's also setup a service account:
+```bash
+gcloud iam service-accounts create rpc.endpoints.YOUR-PROJECT-ID-123.cloud.goog
+gcloud iam service-accounts create rpc.endpoints.uber-org-observability-test.cloud.goog
+
+
+``` -->
+
+## 6. Add load from promremotebench
 
 Create a manifest to launch Prometheus remote write benchmarkers. They simulate load from node exporter nodes.
 ```yaml
